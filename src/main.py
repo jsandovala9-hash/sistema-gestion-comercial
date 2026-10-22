@@ -1,5 +1,2 @@
-__pycache__/
-*.pyc
-venv/
-.venv/
-.vscode/
+
+print("Bienvenido al Sistema de Gestion Comercial")
