@@ -1,22 +1,35 @@
 
-def main():
+from productos import menu_productos
+
+
+def menu_principal():
     while True:
-        print("\nSISTEMA DE GESTION COMERCIAL")
-        print("1. Registrar producto")
-        print("2. Ver productos")
-        print("3. Registrar venta")
-        print("4. Consultar inventario")
-        print("5. Generar reportes")
+        print("\n===================================")
+        print("             FERREX GT")
+        print("     SISTEMA DE GESTION COMERCIAL")
+        print("===================================")
+        print("1. Gestion de productos")
+        print("2. Registro de ventas")
+        print("3. Control de inventarios")
+        print("4. Reportes y estadisticas")
+        print("5. Consultar archivos")
         print("6. Salir")
 
-        opcion = input("Seleccione una opcion: ")
+        opcion = input("\nSeleccione una opcion: ").strip()
 
-        if opcion == "6":
-            print("Saliendo del sistema...")
+        if opcion == "1":
+            menu_productos()
+
+        elif opcion in ("2", "3", "4", "5"):
+            print("Modulo pendiente de desarrollo.")
+
+        elif opcion == "6":
+            print("Gracias por utilizar FERREX GT.")
             break
+
         else:
-            print("Opcion seleccionada:", opcion)
+            print("Opcion invalida. Intente nuevamente.")
 
 
 if __name__ == "__main__":
-    main()
+    menu_principal()
