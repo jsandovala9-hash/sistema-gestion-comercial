@@ -1,212 +1,156 @@
-
-# ==========================================
-# FERREX GT
-# MODULO 1 - GESTION DE PRODUCTOS
-# ==========================================
-
-productos = {}
+# FERREX GT - MODULO 1: GESTION DE PRODUCTOS
+# Comparte inventario_ferreteria.json con ventas.py e inventario.py.
+import math
+from inventario import cargar_datos, guardar_datos, registrar_movimiento, normalizar_codigo
 
 
-# Validar textos obligatorios
 def leer_texto(mensaje):
     while True:
         texto = input(mensaje).strip()
-
         if texto:
             return texto
+        print('Error: este campo no puede estar vacio.')
 
-        print("Error: este campo no puede estar vacio.")
 
-
-# Validar precios y cantidades decimales
 def leer_decimal(mensaje):
     while True:
         try:
-            numero = float(input(mensaje))
-
-            if numero < 0 or numero != numero or numero == float("inf"):
-                print("Error: ingrese un numero valido y no negativo.")
-            else:
-                return numero
-
+            valor = float(input(mensaje).strip().replace(',', '.'))
+            if math.isfinite(valor) and valor >= 0:
+                return round(valor, 2)
         except ValueError:
-            print("Error: debe ingresar un numero.")
+            pass
+        print('Error: ingrese un precio valido no negativo.')
 
 
-# Validar cantidades enteras
 def leer_entero(mensaje):
     while True:
         try:
-            numero = int(input(mensaje))
-
-            if numero < 0:
-                print("Error: no se permiten cantidades negativas.")
-            else:
-                return numero
-
+            valor = int(input(mensaje).strip())
+            if valor >= 0:
+                return valor
         except ValueError:
-            print("Error: ingrese un numero entero.")
+            pass
+        print('Error: ingrese un numero entero no negativo.')
 
 
-# 1. Registrar productos
+def mostrar_producto(codigo, producto):
+    print('-' * 40)
+    print('Codigo:', codigo)
+    print('Nombre:', producto.get('nombre', ''))
+    print('Categoria:', producto.get('categoria', ''))
+    print('Unidad:', producto.get('unidad', 'unidad'))
+    print(f"Precio: Q{producto.get('precio', 0):.2f}")
+    print('Cantidad:', producto.get('cantidad', 0))
+    print('Stock minimo:', producto.get('stock_minimo', 0))
+    print('Estado:', 'Activo' if producto.get('activo', True) else 'Inactivo')
+
+
 def registrar_producto():
-    print("\n--- REGISTRAR PRODUCTO ---")
-
-    codigo = leer_texto("Codigo del producto: ").upper()
-
-    if codigo in productos:
-        print("Error: el codigo ya esta registrado.")
+    inventario, movimientos = cargar_datos()
+    print('\n--- REGISTRAR PRODUCTO ---')
+    codigo = normalizar_codigo(leer_texto('Codigo del producto: '))
+    if codigo in inventario:
+        print('Error: el codigo ya existe.')
         return
-
-    nombre = leer_texto("Nombre del producto: ")
-    categoria = leer_texto("Categoria: ")
-    precio = leer_decimal("Precio de venta Q: ")
-    cantidad = leer_entero("Cantidad disponible: ")
-    stock_minimo = leer_entero("Stock minimo: ")
-
-    productos[codigo] = {
-        "codigo": codigo,
-        "nombre": nombre,
-        "categoria": categoria,
-        "precio": precio,
-        "cantidad": cantidad,
-        "stock_minimo": stock_minimo,
-        "activo": True
-    }
-
-    print("\nProducto registrado correctamente.")
+    nombre = leer_texto('Nombre: ')
+    categoria = leer_texto('Categoria: ')
+    unidad = leer_texto('Unidad (unidad, bolsa, caja, etc.): ')
+    precio = leer_decimal('Precio Q: ')
+    cantidad = leer_entero('Cantidad inicial: ')
+    stock_minimo = leer_entero('Stock minimo: ')
+    inventario[codigo] = dict(nombre=nombre, categoria=categoria, unidad=unidad,
+                             precio=precio, cantidad=cantidad, stock_minimo=stock_minimo,
+                             activo=True)
+    registrar_movimiento(movimientos, 'REGISTRO', codigo, nombre, cantidad, 'Registro desde productos')
+    if guardar_datos(inventario, movimientos):
+        print('Producto registrado correctamente.')
+    else:
+        print('No se pudo guardar el producto.')
 
 
-# Mostrar informacion de un producto
-def mostrar_producto(producto):
-    print("--------------------------------")
-    print("Codigo:", producto["codigo"])
-    print("Nombre:", producto["nombre"])
-    print("Categoria:", producto["categoria"])
-    print(f"Precio: Q{producto['precio']:.2f}")
-    print("Cantidad:", producto["cantidad"])
-    print("Stock minimo:", producto["stock_minimo"])
-    print("Estado:", "Activo" if producto["activo"] else "Inactivo")
-    print("--------------------------------")
-
-
-# 2. Consultar producto por codigo
 def consultar_producto():
-    print("\n--- CONSULTAR PRODUCTO ---")
-
-    codigo = leer_texto("Codigo: ").upper()
-
-    if codigo in productos:
-        mostrar_producto(productos[codigo])
+    inventario, _ = cargar_datos()
+    codigo = normalizar_codigo(leer_texto('Codigo: '))
+    if codigo in inventario:
+        mostrar_producto(codigo, inventario[codigo])
     else:
-        print("Error: producto no encontrado.")
+        print('Producto no encontrado.')
 
 
-# 3. Mostrar listado de productos
 def listar_productos():
-    print("\n--- LISTADO DE PRODUCTOS ---")
-
-    if not productos:
-        print("No hay productos registrados.")
-        return
-
-    for producto in productos.values():
-        mostrar_producto(producto)
+    inventario, _ = cargar_datos()
+    if not inventario:
+        print('No hay productos registrados.')
+    for codigo, producto in sorted(inventario.items()):
+        mostrar_producto(codigo, producto)
 
 
-# 4. Modificar producto
 def modificar_producto():
-    print("\n--- MODIFICAR PRODUCTO ---")
-
-    codigo = leer_texto("Codigo: ").upper()
-
-    if codigo not in productos:
-        print("Error: producto no encontrado.")
+    inventario, movimientos = cargar_datos()
+    codigo = normalizar_codigo(leer_texto('Codigo: '))
+    if codigo not in inventario:
+        print('Producto no encontrado.')
         return
-
-    producto = productos[codigo]
-
-    print("\nInformacion actual:")
-    mostrar_producto(producto)
-
-    print("\nIngrese los nuevos datos:")
-
-    nombre = leer_texto("Nuevo nombre: ")
-    categoria = leer_texto("Nueva categoria: ")
-    precio = leer_decimal("Nuevo precio Q: ")
-    cantidad = leer_entero("Nueva cantidad: ")
-    stock_minimo = leer_entero("Nuevo stock minimo: ")
-
-    producto["nombre"] = nombre
-    producto["categoria"] = categoria
-    producto["precio"] = precio
-    producto["cantidad"] = cantidad
-    producto["stock_minimo"] = stock_minimo
-
-    print("\nProducto modificado correctamente.")
-
-
-# 5. Desactivar producto
-def desactivar_producto():
-    print("\n--- DESACTIVAR PRODUCTO ---")
-
-    codigo = leer_texto("Codigo: ").upper()
-
-    if codigo not in productos:
-        print("Error: producto no encontrado.")
-        return
-
-    if not productos[codigo]["activo"]:
-        print("El producto ya esta desactivado.")
-        return
-
-    confirmar = input("¿Desea desactivar el producto? (S/N): ").strip().upper()
-
-    if confirmar == "S":
-        productos[codigo]["activo"] = False
-        print("Producto desactivado correctamente.")
+    producto = inventario[codigo]
+    mostrar_producto(codigo, producto)
+    print('Ingrese los nuevos datos:')
+    nombre = leer_texto('Nuevo nombre: ')
+    categoria = leer_texto('Nueva categoria: ')
+    unidad = leer_texto('Nueva unidad: ')
+    precio = leer_decimal('Nuevo precio Q: ')
+    cantidad = leer_entero('Nueva cantidad: ')
+    stock_minimo = leer_entero('Nuevo stock minimo: ')
+    diferencia = cantidad - producto.get('cantidad', 0)
+    producto.update(nombre=nombre, categoria=categoria, unidad=unidad, precio=precio,
+                    cantidad=cantidad, stock_minimo=stock_minimo)
+    registrar_movimiento(movimientos, 'MODIFICACION', codigo, nombre, diferencia,
+                         'Modificacion de datos y cantidad desde productos')
+    if guardar_datos(inventario, movimientos):
+        print('Producto modificado correctamente.')
     else:
-        print("Operacion cancelada.")
+        print('No se pudo guardar la modificacion.')
 
 
-# Menu del modulo de productos
+def desactivar_producto():
+    inventario, movimientos = cargar_datos()
+    codigo = normalizar_codigo(leer_texto('Codigo: '))
+    if codigo not in inventario:
+        print('Producto no encontrado.')
+        return
+    if not inventario[codigo].get('activo', True):
+        print('El producto ya esta desactivado.')
+        return
+    if input('Desea desactivar el producto? (S/N): ').strip().upper() != 'S':
+        print('Operacion cancelada.')
+        return
+    inventario[codigo]['activo'] = False
+    registrar_movimiento(movimientos, 'DESACTIVACION', codigo,
+                         inventario[codigo]['nombre'], 0, 'Producto desactivado')
+    if guardar_datos(inventario, movimientos):
+        print('Producto desactivado correctamente.')
+    else:
+        print('No se pudo guardar la desactivacion.')
+
+
 def menu_productos():
     while True:
-        print("\n===================================")
-        print("             FERREX GT")
-        print("       GESTION DE PRODUCTOS")
-        print("===================================")
-        print("1. Registrar producto")
-        print("2. Consultar producto")
-        print("3. Listar productos")
-        print("4. Modificar producto")
-        print("5. Desactivar producto")
-        print("6. Regresar al menu principal")
-
-        opcion = input("\nSeleccione una opcion: ").strip()
-
-        if opcion == "1":
-            registrar_producto()
-
-        elif opcion == "2":
-            consultar_producto()
-
-        elif opcion == "3":
-            listar_productos()
-
-        elif opcion == "4":
-            modificar_producto()
-
-        elif opcion == "5":
-            desactivar_producto()
-
-        elif opcion == "6":
-            print("Regresando al menu principal...")
-            break
-
-        else:
-            print("Opcion invalida. Intente nuevamente.")
+        print('\n===== FERREX GT - GESTION DE PRODUCTOS =====')
+        print('1. Registrar producto')
+        print('2. Consultar producto')
+        print('3. Listar productos')
+        print('4. Modificar producto')
+        print('5. Desactivar producto')
+        print('6. Regresar al menu principal')
+        opcion = input('Seleccione una opcion: ').strip()
+        if opcion == '1': registrar_producto()
+        elif opcion == '2': consultar_producto()
+        elif opcion == '3': listar_productos()
+        elif opcion == '4': modificar_producto()
+        elif opcion == '5': desactivar_producto()
+        elif opcion == '6': break
+        else: print('Opcion invalida.')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     menu_productos()
