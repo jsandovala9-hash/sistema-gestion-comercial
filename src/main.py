@@ -3,6 +3,7 @@ from productos import menu_productos
 from ventas import menu_ventas
 from inventario import menu_principal as menu_inventario
 from reportes import menu_reportes
+from archivos import menu_archivos
 
 
 def menu_principal():
@@ -33,10 +34,11 @@ def menu_principal():
             menu_reportes()
 
         elif opcion == "5":
-            print("Modulo de archivos pendiente de desarrollo.")
+            menu_archivos()
 
         elif opcion == "6":
-            print("Gracias por utilizar FERREX GT.")
+            print("\nGracias por utilizar FERREX GT.")
+            print("Hasta pronto.")
             break
 
         else:
